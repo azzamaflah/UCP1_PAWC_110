@@ -1,0 +1,169 @@
+<div class="container mt-5">
+  <h1 class="text-center">Daftar Hewan</h1>
+
+  <!-- Form to Add New Todo -->
+  <form id="addTodoForm" class="my-4">
+    <div class="input-group">
+      <input
+        type="text"
+        id="newNama"
+        class="form-control"
+        placeholder="nama hewan"
+        required
+      />
+      <input
+        type="text"
+        id="newHabitat"
+        class="form-control"
+        placeholder="habitat"
+        required
+      />
+      <div class="input-group-append">
+        <button type="submit" class="btn btn-primary">Tambahkan</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- List of Todos -->
+  <ul id="todoList" class="list-group">
+    <% todos.forEach(todo => { %>
+    <li
+      class="list-group-item d-flex justify-content-between align-items-center"
+    >
+      <span>
+        <strong><%= todo.nama %></strong> - Habitat: <%= todo.habitat %>
+      </span>
+      <div>
+        <button
+          class="btn btn-sm btn-success mr-2 editBtn"
+          data-id="<%= todo.id %>"
+        >
+          Edit
+        </button>
+        <button
+          class="btn btn-sm btn-danger deleteBtn"
+          data-id="<%= todo.id %>"
+        >
+          Delete
+        </button>
+      </div>
+    </li>
+    <% }); %>
+  </ul>
+
+  <!-- Edit Todo Modal -->
+  <!-- Edit Todo Modal -->
+  <div
+    id="editModal"
+    class="modal fade"
+    tabindex="-1"
+    aria-labelledby="editModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Animal</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form id="editTodoForm">
+            <div class="form-group">
+              <label for="editNama">Nama Hewan</label>
+              <input type="text" id="editNama" class="form-control" required />
+            </div>
+            <div class="form-group mt-3">
+              <label for="editHabitat">Habitat</label>
+              <input
+                type="text"
+                id="editHabitat"
+                class="form-control"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">
+              Save Changes
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      // Menambahkan hewan baru
+      $("#addTodoForm").on("submit", function (e) {
+        e.preventDefault();
+        const nama = $("#newNama").val().trim();
+        const habitat = $("#newHabitat").val().trim();
+        if (nama && habitat) {
+          $.ajax({
+            url: "/todos",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ nama: nama, habitat: habitat }),
+            success: function (newAnimal) {
+              location.reload(); // Reload untuk menampilkan hewan baru
+            },
+            error: function (error) {
+              console.error("Error adding animal:", error.responseText);
+            },
+          });
+        }
+      });
+
+      // Menghapus hewan
+      $(".deleteBtn").on("click", function () {
+        const id = $(this).data("id");
+        $.ajax({
+          url: "/todos/" + id,
+          type: "DELETE",
+          success: function () {
+            location.reload(); // Reload untuk menampilkan daftar hewan yang terupdate
+          },
+        });
+      });
+
+      // Menampilkan modal untuk edit hewan
+      let editId;
+      $(".editBtn").on("click", function () {
+        editId = $(this).data("id");
+        const currentNama = $(this).closest("li").find("span strong").text();
+        const currentHabitat = $(this)
+          .closest("li")
+          .find("span")
+          .text()
+          .split("- Habitat:")[1]
+          .trim();
+        $("#editNama").val(currentNama);
+        $("#editHabitat").val(currentHabitat);
+        $("#editModal").modal("show");
+      });
+
+      // Memperbarui hewan pada form submit
+      $("#editTodoForm").on("submit", function (e) {
+        e.preventDefault();
+        const nama = $("#editNama").val().trim();
+        const habitat = $("#editHabitat").val().trim();
+        if (nama && habitat) {
+          $.ajax({
+            url: "/todos/" + editId,
+            type: "PUT",
+            data: JSON.stringify({ nama: nama, habitat: habitat }),
+            contentType: "application/json",
+            success: function () {
+              location.reload(); // Reload untuk menampilkan hewan yang diperbarui
+            },
+          });
+        }
+      });
+    });
+  </script>
+</div>
